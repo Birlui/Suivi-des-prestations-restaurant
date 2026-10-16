@@ -7,7 +7,16 @@
 // connexion (voir Login.jsx) et réutilisés pour tous les appels suivants.
 // ---------------------------------------------------------------------------
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+// "??" (et non "||") pour qu'une chaîne vide reste possible (frontend et API sur
+// la même origine). Le "/" final éventuel est retiré pour éviter les "//api".
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/+$/, "");
+
+if (import.meta.env.PROD && BASE_URL.includes("localhost")) {
+  console.warn(
+    `[api] VITE_API_BASE_URL pointe vers ${BASE_URL} dans un build de production : ` +
+      "définissez-la sur la plateforme de déploiement puis relancez le build."
+  );
+}
 
 let credentials = null; // { identifiant, motDePasse }
 

@@ -85,6 +85,25 @@ dans le zip backend joint à ce message) :
 Le build (`npm run build`) génère un dossier `dist/` **100% statique**
 (HTML/CSS/JS) — aucun serveur Node n'est requis en production. Options :
 
+### Render (Static Site) — configuration fournie
+
+Le fichier [`render.yaml`](render.yaml) décrit le service (build, dossier
+publié, réécriture SPA, en-têtes de cache).
+
+1. Poussez le dépôt sur GitHub.
+2. Sur Render : **New > Blueprint**, puis sélectionnez le dépôt.
+3. Renseignez `VITE_API_BASE_URL` quand Render la demande, avec l'URL publique
+   du backend **sans `/` final**, par exemple `https://marches-api.onrender.com`.
+4. Côté backend, ajoutez l'URL du frontend aux origines CORS autorisées :
+   `CORS_ALLOWED_ORIGINS=https://marches-restauration-frontend.onrender.com`.
+
+Si vous changez `VITE_API_BASE_URL` plus tard, relancez un déploiement
+(**Manual Deploy > Clear build cache & deploy**) : la valeur est figée au build.
+
+Sans Blueprint (New > Static Site) : Build Command `npm ci && npm run build`,
+Publish Directory `dist`, et une règle **Redirects/Rewrites** `/*` → `/index.html`
+(Rewrite).
+
 ### Option A — Hébergeur statique (Netlify, Vercel, GitHub Pages, S3+CloudFront…)
 ```bash
 npm run build

@@ -1,0 +1,36 @@
+# Blueprint Render — déploiement du frontend en Static Site.
+# Render > New > Blueprint, puis sélectionner ce dépôt.
+services:
+  - type: web
+    name: marches-restauration-frontend
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      # URL publique du backend Spring Boot (ex. https://marches-api.onrender.com).
+      # Lue AU MOMENT DU BUILD : tout changement exige un redéploiement.
+      # sync: false => Render demande la valeur à la création du Blueprint.
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: NODE_VERSION
+        value: "20"
+    routes:
+      # SPA : toute route inconnue renvoie index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      # Les fichiers de dist/assets/ sont hashés par Vite => cache long sans risque
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
