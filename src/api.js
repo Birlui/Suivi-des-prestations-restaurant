@@ -5,6 +5,8 @@
 // chaque requête doit porter un en-tête "Authorization: Basic base64(id:mdp)".
 // Les identifiants sont fournis une fois via setCredentials() après la
 // connexion (voir Login.jsx) et réutilisés pour tous les appels suivants.
+// Le jeton est conservé dans sessionStorage pour survivre au rafraîchissement
+// de la page ; il est effacé à la fermeture de l'onglet ou à la déconnexion.
 // ---------------------------------------------------------------------------
 
 // "??" (et non "||") pour qu'une chaîne vide reste possible (frontend et API sur
@@ -18,19 +20,43 @@ if (import.meta.env.PROD && BASE_URL.includes("localhost")) {
   );
 }
 
-let credentials = null; // { identifiant, motDePasse }
+const STORAGE_KEY = "marches-restauration.auth";
+
+function lireJetonStocke() {
+  try {
+    return sessionStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null; // stockage indisponible (navigation privée stricte, etc.)
+  }
+}
+
+let jeton = lireJetonStocke(); // base64("identifiant:motDePasse")
 
 export function setCredentials(identifiant, motDePasse) {
-  credentials = { identifiant, motDePasse };
+  jeton = btoa(unescape(encodeURIComponent(`${identifiant}:${motDePasse}`)));
+  try {
+    sessionStorage.setItem(STORAGE_KEY, jeton);
+  } catch {
+    // sans stockage, la session reste valable jusqu'au prochain rafraîchissement
+  }
 }
 
 export function clearCredentials() {
-  credentials = null;
+  jeton = null;
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // rien à faire
+  }
+}
+
+/** Vrai si des identifiants sont mémorisés (session à restaurer au chargement). */
+export function hasCredentials() {
+  return jeton !== null;
 }
 
 function authHeader() {
-  if (!credentials) return {};
-  const jeton = btoa(unescape(encodeURIComponent(`${credentials.identifiant}:${credentials.motDePasse}`)));
+  if (!jeton) return {};
   return { Authorization: `Basic ${jeton}` };
 }
 

@@ -5,7 +5,7 @@ import {
   ChevronDown, LogOut, Loader2,
 } from "lucide-react";
 import { C, fmt, todayISO, datesBetween, Badge, Card, Stat, Modal, Field, inputCls, inputStyle } from "./ui.jsx";
-import { api, clearCredentials, ApiError } from "./api.js";
+import { api, clearCredentials, hasCredentials, ApiError } from "./api.js";
 import Login from "./Login.jsx";
 
 const ROLE_KEY_BY_BACKEND = {
@@ -47,6 +47,26 @@ const STATUT_COMMANDE_LABEL = { ACTIVE: "Active", ANNULEE: "Annulée" };
 // ---------------------------------------------------------------------------
 export default function App() {
   const [utilisateur, setUtilisateur] = useState(null);
+  // Au rechargement de la page, on revalide les identifiants mémorisés.
+  const [restauration, setRestauration] = useState(hasCredentials);
+
+  useEffect(() => {
+    if (!hasCredentials()) return;
+    api.moi()
+      .then(setUtilisateur)
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) clearCredentials();
+      })
+      .finally(() => setRestauration(false));
+  }, []);
+
+  if (restauration) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center gap-2 text-sm" style={{ background: C.paper, color: C.muted }}>
+        <Loader2 size={16} className="animate-spin" /> Reconnexion…
+      </div>
+    );
+  }
 
   if (!utilisateur) {
     return <Login onLogin={setUtilisateur} />;
